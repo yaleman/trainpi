@@ -141,9 +141,7 @@ class TrainPiApp(App):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
-        Binding(
-            key="space", action="stop_start", description="Toggle motor", show=False
-        ),
+        Binding(key="f", action="stop_start", description="Toggle motor", show=False),
         Binding(key="w", action="speed_up", description="Speed Up", show=False),
         Binding(key="s", action="speed_down", description="Speed Down", show=False),
     ]

@@ -7,9 +7,14 @@ TrainControls {
     padding: 1;
 }
 
+SpeedDisplay {
+    text-opacity: 100%;
+    height: 3;
+}
+
 TimeDisplay {
     content-align: center middle;
-    text-opacity: 60%;
+    text-opacity: 100%;
     height: 3;
 }
 

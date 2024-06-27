@@ -4,36 +4,14 @@ from time import monotonic
 from typing import Optional
 from buildhat import DeviceError, PassiveMotor  # type: ignore[import-untyped]
 
-import platform
-
-# from textual.containers import ScrollableContainer
 from textual.binding import Binding
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Static, Header, Footer
 from textual.reactive import reactive
 
-# the train is a "passive" motor - https://buildhat.readthedocs.io/en/latest/buildhat/passivemotor.html
+from trainpi import get_motor
 
-# def dothething() -> None:
-#     try:
-#         print("Connecting to motor...")
-
-#         motor = PassiveMotor("A")
-#         try:
-#             motor.isconnected()
-#         except DeviceError as e:
-#             print("DeviceError connecting to motor:", e)
-#         motor.plimit(1.0)
-#         motor.set_default_speed(100)
-
-#         print("Start motor")
-#         motor.start()
-#         time.sleep(3)
-#         print("Stop motor")
-#         motor.stop()
-#     except Exception as error:
-#         print(f"ERROR! {error}")
-#         motor.stop()
+DEFAULT_SPEED = 50
 
 
 class TimeDisplay(Static):
@@ -74,14 +52,30 @@ class TimeDisplay(Static):
         self.time = 0
 
 
+class SpeedDisplay(Static):
+    """A widget to display the speed of the motor."""
+
+    speed = reactive(DEFAULT_SPEED)
+
+    def watch_speed(self, speed: int) -> None:
+        """Called when the speed attribute changes."""
+        self.update(f"Speed: {speed}")
+
+    def speed_up(self) -> None:
+        """Method to increase the speed of the motor."""
+        self.speed = min(100, self.speed + 10)
+
+    def speed_down(self) -> None:
+        """Method to decrease the speed of the motor."""
+        self.speed = max(-100, self.speed - 10)
+
+
 class TrainControls(Static):
 
-    # BINDINGS = [("s", "start_stop", "Start/Stop")]
-
     running = False
-    speed = 50
+    speed = int(DEFAULT_SPEED)
 
-    def __init__(self, motor: PassiveMotor) -> None:
+    def __init__(self, motor: Optional[PassiveMotor]) -> None:
         super().__init__()
         self.motor = motor
 
@@ -90,23 +84,36 @@ class TrainControls(Static):
         yield Button("Stop", id="stop", variant="error")
         yield Button("Reset", id="reset")
         yield TimeDisplay()
+        yield SpeedDisplay()
 
     def speed_up(self) -> None:
-        self.speed = min(100, self.speed + 10)
-        if self.running:
+        # max out at 100
+        speed = self.query_one(SpeedDisplay)
+        speed.speed_up()
+        if self.running and self.motor is not None:
             self.motor.start(self.speed)
 
     def speed_down(self) -> None:
-        self.speed = max(0, self.speed - 10)
-        if self.running:
-            if self.speed == 0:
-                self.toggle_running()
-            else:
-                self.motor.start(self.speed)
+
+        speed = self.query_one(SpeedDisplay)
+        speed.speed_down()
+        if self.running and self.motor is not None:
+            self.motor.start(self.speed)
+
+    def start_running(self) -> None:
+        self.running = True
+        self.add_class("started")
+        time_display = self.query_one(TimeDisplay)
+        time_display.start()
+
+    def stop_running(self) -> None:
+        self.running = False
+        self.remove_class("started")
+        time_display = self.query_one(TimeDisplay)
+        time_display.stop()
 
     def toggle_running(self) -> None:
         if self.motor is not None:
-
             if self.running:
                 self.motor.stop()
             else:
@@ -118,15 +125,9 @@ class TrainControls(Static):
                 self.motor.start(self.speed)
 
         if self.has_class("started"):
-            self.running = False
-            self.remove_class("started")
-            time_display = self.query_one(TimeDisplay)
-            time_display.stop()
+            self.stop_running()
         else:
-            self.running = True
-            self.add_class("started")
-            time_display = self.query_one(TimeDisplay)
-            time_display.start()
+            self.start_running()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Event handler called when a button is pressed."""
@@ -138,7 +139,7 @@ class TrainControls(Static):
             time_display.reset()
 
 
-class TrainPiApp(App):
+class TrainPiApp(App[None]):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
@@ -152,8 +153,8 @@ class TrainPiApp(App):
     CSS_PATH = "trainpi.tcss"
 
     def __init__(self, motor: PassiveMotor) -> None:
-        super().__init__()
         self.motor = motor
+        super().__init__()
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -178,29 +179,16 @@ class TrainPiApp(App):
         speeddown.speed_down()
 
 
-def get_motor() -> Optional[PassiveMotor]:
-    system = platform.system()
-    if system == "Darwin":
-        # print("You're on a Mac")
-        return None
-    elif system == "Linux":
-        # print("You're on Linux")
-        motor = PassiveMotor("A")
-        motor.plimit(1.0)
-        motor.set_default_speed(50)
-        return motor
-    else:
-        # print(f"You're on a different system: {system}")
-        return None
-
-
 def main() -> None:
     motor = get_motor()
-    app = TrainPiApp(motor)
-    app.run()
-
-    if motor is not None:
-        motor.stop()
+    try:
+        app = TrainPiApp(motor)
+        app.run()
+    except Exception as error:
+        print(error)
+    finally:
+        if motor is not None:
+            motor.stop()
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from buildhat import DeviceError, PassiveMotor  # type: ignore[import-untyped]
 import platform
 
 # from textual.containers import ScrollableContainer
-
+from textual.binding import Binding
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Static, Header, Footer
 from textual.reactive import reactive
@@ -79,6 +79,7 @@ class TrainControls(Static):
     # BINDINGS = [("s", "start_stop", "Start/Stop")]
 
     running = False
+    speed = 50
 
     def __init__(self, motor: PassiveMotor) -> None:
         super().__init__()
@@ -89,6 +90,12 @@ class TrainControls(Static):
         yield Button("Stop", id="stop", variant="error")
         yield Button("Reset", id="reset")
         yield TimeDisplay()
+
+    def speed_up(self) -> None:
+        self.speed = min(100, self.speed + 10)
+
+    def speed_down(self) -> None:
+        self.speed = max(0, self.speed - 10)
 
     def toggle_running(self) -> None:
         if self.motor is not None:
@@ -127,8 +134,9 @@ class TrainControls(Static):
 class TrainPiApp(App):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
-        ("s", "stop_start", "Toggle Train"),
         ("q", "quit", "Quit"),
+        Binding(key="s", action="stop_start", description="Toggle motor", show=False),
+        Binding(key="w", action="speed_up", description="Speed Up", show=False),
     ]
 
     CSS_PATH = "trainpi.tcss"

@@ -91,17 +91,17 @@ class TrainControls(Static):
         yield TimeDisplay()
 
     def toggle_running(self) -> None:
-        if not self.running:
-            if self.motor is not None:
+        if self.motor is not None:
+
+            if self.running:
+                self.motor.stop()
+            else:
                 try:
                     self.motor.isconnected()
                 except DeviceError as e:
                     print("DeviceError connecting to motor:", e)
                     sys.exit(1)
-                if self.running:
-                    self.motor.stop()
-                else:
-                    self.motor.start()
+                self.motor.start()
 
         if self.has_class("started"):
             self.running = False

@@ -94,14 +94,15 @@ class TrainControls(Static):
     def speed_up(self) -> None:
         self.speed = min(100, self.speed + 10)
         if self.running:
-            self.motor.set_speed(self.speed)
+            self.motor.start(self.speed)
 
     def speed_down(self) -> None:
         self.speed = max(0, self.speed - 10)
         if self.running:
-            self.motor.set_speed(self.speed)
             if self.speed == 0:
                 self.toggle_running()
+            else:
+                self.motor.start(self.speed)
 
     def toggle_running(self) -> None:
         if self.motor is not None:

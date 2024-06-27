@@ -28,8 +28,6 @@ def main() -> None:
         print(f"ERROR! {error}")
         motor.stop()
 
-    # pause()
-
 
 if __name__ == "__main__":
     main()

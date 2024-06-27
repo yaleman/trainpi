@@ -103,12 +103,13 @@ class TrainControls(Static):
                 else:
                     self.motor.start()
 
-        self.running = not self.running
         if self.has_class("started"):
+            self.running = False
             self.remove_class("started")
             time_display = self.query_one(TimeDisplay)
             time_display.stop()
         else:
+            self.running = True
             self.add_class("started")
             time_display = self.query_one(TimeDisplay)
             time_display.start()

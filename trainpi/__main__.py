@@ -93,9 +93,15 @@ class TrainControls(Static):
 
     def speed_up(self) -> None:
         self.speed = min(100, self.speed + 10)
+        if self.running:
+            self.motor.set_speed(self.speed)
 
     def speed_down(self) -> None:
         self.speed = max(0, self.speed - 10)
+        if self.running:
+            self.motor.set_speed(self.speed)
+            if self.speed == 0:
+                self.toggle_running()
 
     def toggle_running(self) -> None:
         if self.motor is not None:
@@ -108,7 +114,7 @@ class TrainControls(Static):
                 except DeviceError as e:
                     print("DeviceError connecting to motor:", e)
                     sys.exit(1)
-                self.motor.start()
+                self.motor.start(self.speed)
 
         if self.has_class("started"):
             self.running = False
@@ -135,8 +141,11 @@ class TrainPiApp(App):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
-        Binding(key="s", action="stop_start", description="Toggle motor", show=False),
+        Binding(
+            key="space", action="stop_start", description="Toggle motor", show=False
+        ),
         Binding(key="w", action="speed_up", description="Speed Up", show=False),
+        Binding(key="s", action="speed_down", description="Speed Down", show=False),
     ]
 
     CSS_PATH = "trainpi.tcss"
@@ -158,6 +167,14 @@ class TrainPiApp(App):
     def action_stop_start(self) -> None:
         stopstart = self.query_one(TrainControls)
         stopstart.toggle_running()
+
+    def action_speed_up(self) -> None:
+        speedup = self.query_one(TrainControls)
+        speedup.speed_up()
+
+    def action_speed_down(self) -> None:
+        speeddown = self.query_one(TrainControls)
+        speeddown.speed_down()
 
 
 def get_motor() -> Optional[PassiveMotor]:

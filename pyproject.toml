@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "trainpi"
+version = "0.1.0"
+description = ""
+authors = ["James Hodgkinson <james@terminaloutcomes.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+buildhat = "^0.7.0"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.10.1"
+ruff = "^0.4.10"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+"trainpi" = "trainpi.__main__:main"

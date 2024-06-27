@@ -7,17 +7,15 @@ from buildhat import DeviceError, PassiveMotor  # type: ignore
 
 def main() -> None:
     try:
-        print("Hello world")
-        print("Starting Motor")
+        print("Connecting to motor...")
 
         motor = PassiveMotor("A")
-
         try:
             motor.isconnected()
         except DeviceError as e:
             print("DeviceError connecting to motor:", e)
-
-        motor.set_default_speed(30)
+        motor.plimit(1.0)
+        motor.set_default_speed(100)
 
         print("Start motor")
         motor.start()

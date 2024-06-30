@@ -1,6 +1,6 @@
 # import time
 import sys
-from time import monotonic
+
 from typing import Optional
 from buildhat import DeviceError, PassiveMotor  # type: ignore[import-untyped]
 
@@ -10,70 +10,36 @@ from textual.widgets import Button, Static, Header, Footer
 from textual.reactive import reactive
 
 from trainpi import get_motor
+from trainpi.timedisplay import TimeDisplay
 
 DEFAULT_SPEED = 50
-
-
-class TimeDisplay(Static):
-    """A widget to display elapsed time."""
-
-    start_time = reactive(monotonic)  # type: ignore[var-annotated,arg-type]
-    time = reactive(0.0)
-    total = reactive(0.0)
-
-    def on_mount(self) -> None:
-        """Event handler called when widget is added to the app."""
-        self.update_timer = self.set_interval(1 / 60, self.update_time, pause=True)
-
-    def update_time(self) -> None:
-        """Method to update the time to the current time."""
-        self.time = self.total + (monotonic() - self.start_time)
-
-    def watch_time(self, time: float) -> None:
-        """Called when the time attribute changes."""
-        minutes, seconds = divmod(time, 60)
-        hours, minutes = divmod(minutes, 60)
-        self.update(f"{hours:02,.0f}:{minutes:02.0f}:{seconds:05.2f}")
-
-    def start(self) -> None:
-        """Method to start (or resume) time updating."""
-        self.start_time = monotonic()
-        self.update_timer.resume()
-
-    def stop(self) -> None:
-        """Method to stop the time display updating."""
-        self.update_timer.pause()
-        self.total += monotonic() - self.start_time
-        self.time = self.total
-
-    def reset(self) -> None:
-        """Method to reset the time display to zero."""
-        self.total = 0
-        self.time = 0
 
 
 class SpeedDisplay(Static):
     """A widget to display the speed of the motor."""
 
-    speed = reactive(DEFAULT_SPEED)
+    speed = reactive(0)
 
     def watch_speed(self, speed: int) -> None:
         """Called when the speed attribute changes."""
         self.update(f"Speed: {speed}")
 
-    def speed_up(self) -> None:
+    def speed_up(self, motor: Optional[PassiveMotor]) -> None:
         """Method to increase the speed of the motor."""
         self.speed = min(100, self.speed + 10)
+        if motor is not None:
+            motor.start(self.speed)
 
-    def speed_down(self) -> None:
+    def speed_down(self, motor: Optional[PassiveMotor]) -> None:
         """Method to decrease the speed of the motor."""
         self.speed = max(-100, self.speed - 10)
+        if motor is not None:
+            motor.start(self.speed)
 
 
 class TrainControls(Static):
 
     running = False
-    speed = int(DEFAULT_SPEED)
 
     def __init__(self, motor: Optional[PassiveMotor]) -> None:
         super().__init__()
@@ -89,25 +55,30 @@ class TrainControls(Static):
     def speed_up(self) -> None:
         # max out at 100
         speed = self.query_one(SpeedDisplay)
-        speed.speed_up()
-        if self.running and self.motor is not None:
-            self.motor.start(self.speed)
+        speed.speed_up(self.motor)
 
     def speed_down(self) -> None:
-
         speed = self.query_one(SpeedDisplay)
-        speed.speed_down()
-        if self.running and self.motor is not None:
-            self.motor.start(self.speed)
+        speed.speed_down(self.motor)
 
     def start_running(self) -> None:
         self.running = True
         self.add_class("started")
+
+        speed = self.query_one(SpeedDisplay)
+        speed.speed = 0
+
         time_display = self.query_one(TimeDisplay)
         time_display.start()
 
     def stop_running(self) -> None:
         self.running = False
+        if self.motor is not None:
+            self.motor.stop()
+
+        speed = self.query_one(SpeedDisplay)
+        speed.speed = 0
+
         self.remove_class("started")
         time_display = self.query_one(TimeDisplay)
         time_display.stop()
@@ -122,7 +93,6 @@ class TrainControls(Static):
                 except DeviceError as e:
                     print("DeviceError connecting to motor:", e)
                     sys.exit(1)
-                self.motor.start(self.speed)
 
         if self.has_class("started"):
             self.stop_running()

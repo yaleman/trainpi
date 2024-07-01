@@ -1,0 +1,67 @@
+# This is the config file I use on my train
+#
+# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2c_arm=on
+#dtparam=i2s=on
+#dtparam=spi=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=off
+
+# Additional overlays and parameters are documented
+# /boot/firmware/overlays/README
+
+# Automatically load overlays for detected cameras
+camera_auto_detect=0
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=0
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver, disable bluetooth
+dtoverlay=vc4-kms-v3d,disable-bt
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows (only for pi 4)
+# arm_boost=1
+
+# https://www.raspberrypi.com/documentation/computers/config_txt.html#overclocking
+over_voltage=4
+# cpu speed, arm_freq default is 1000 on PiZ 2W
+arm_freq=1100
+# core_freq default is 400 on PiZ 2W, can help L2 cache speed
+core_freq=450
+
+# By default (force_turbo=0) the on-demand CPU frequency driver will raise clocks to their maximum frequencies when the ARM cores are busy, and will lower them to the minimum frequencies when the ARM cores are idle.
+# force_turbo=1 overrides this behaviour and forces maximum frequencies even when the ARM cores are not busy.
+# force_turbo=1
+
+# don't check for the thing which can't exist
+disable_poe_fan=1
+# don't show the pretty splash screen
+disable_splash=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[all]
+enable_uart=1

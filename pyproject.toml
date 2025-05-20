@@ -1,23 +1,19 @@
-[tool.poetry]
+
+[project]
 name = "trainpi"
-version = "0.1.0"
-description = ""
-authors = ["James Hodgkinson <james@terminaloutcomes.com>"]
+version = "0.1.1"
+description = "Train control via Raspberry Pi GPIO and the LEGO Build Hat"
+authors = [{ name = "James Hodgkinson", email = "james@terminaloutcomes.com" }]
+requires-python = "<4.0,>=3.11"
+dependencies = ["buildhat<1.0.0,>=0.7.0", "textual<1.0.0,>=0.70.0"]
 readme = "README.md"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-buildhat = "^0.7.0"
+[project.scripts]
+trainpi = "trainpi.__main__:main"
 
-
-textual = "^0.70.0"
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.10.1"
-ruff = "^0.4.10"
+[dependency-groups]
+dev = ["mypy<2.0.0,>=1.10.1", "ruff<1.0.0,>=0.4.10"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-"trainpi" = "trainpi.__main__:main"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

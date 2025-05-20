@@ -38,7 +38,6 @@ class SpeedDisplay(Static):
 
 
 class TrainControls(Static):
-
     running = False
 
     def __init__(self, motor: Optional[PassiveMotor]) -> None:
@@ -124,6 +123,7 @@ class TrainPiApp(App[None]):
 
     def __init__(self, motor: PassiveMotor) -> None:
         self.motor = motor
+        self.dark: bool = False
         super().__init__()
 
     def compose(self) -> ComposeResult:
@@ -151,14 +151,19 @@ class TrainPiApp(App[None]):
 
 def main() -> None:
     motor = get_motor()
-    try:
-        app = TrainPiApp(motor)
-        app.run()
-    except Exception as error:
-        print(error)
-    finally:
-        if motor is not None:
-            motor.stop()
+    if motor is None:
+        print("No motor found. Please connect a motor.")
+        sys.exit(1)
+
+    else:
+        try:
+            app = TrainPiApp(motor)
+            app.run()
+        except Exception as error:
+            print(error)
+        finally:
+            if motor is not None:
+                motor.stop()
 
 
 if __name__ == "__main__":
